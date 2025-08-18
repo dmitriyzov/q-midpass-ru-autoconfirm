@@ -211,6 +211,8 @@ for(let attempts = 0; attempts < 3; attempts++) {
     }
   }
 }
-if (!confirmed) throw new Error('Не удалось подтвердить заявку')
+
+if (!confirmed) throw new Error('Не удалось подтвердить заявку.')
+
 await page.close()
 process.exit(0)
