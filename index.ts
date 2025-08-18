@@ -77,7 +77,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   const authCaptcha = await solveCaptcha(captchaBase64)
 
   if (authCaptcha === null) {
-    console.error('Не смогли разгадать капчу, попытка №', attempts + 1)
+    console.error('Не смогли разгадать капчу авторизации, попытка №', attempts + 1)
     await page.goto('https://q.midpass.ru/')
     continue
   }
@@ -104,7 +104,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   })
 
   if (isCaptchaError) {
-    console.error('Неверно введена капча, попытка №', attempts + 1)
+    console.error('Неверно введена капча авторизации, попытка №', attempts + 1)
     await rucaptchaRequest('reportIncorrect', { taskId: authCaptcha.taskId })
   } else {
     await rucaptchaRequest('reportCorrect', { taskId: authCaptcha.taskId })
@@ -156,7 +156,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
     console.log("solving confirm captcha, attempt #", attempts + 1);
     const confirmCaptcha = await solveCaptcha(confirmCaptchaBase64)
     if (confirmCaptcha === null) {
-      console.error('Не смогли разгадать капчу, попытка №', attempts + 1)
+      console.error('Не смогли разгадать капчу подтверждения')
       await page.$eval('a[href="javascript:RefreshCaptcha();"', (el: HTMLAnchorElement) => el.click())
       await new Promise(resolve => setTimeout(resolve, 2000))
       continue
@@ -200,7 +200,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
 
     if (isCaptchaError) {
       await page.$eval('.messager-window a', (el: HTMLAnchorElement) => el.click())
-      console.error('Неверно введена капча, попытка №', attempts + 1)
+      console.error('Неверно введена капча подтверждения, попытка №', attempts + 1)
       await rucaptchaRequest('reportIncorrect', { taskId: confirmCaptcha.taskId })
     } else {
       await rucaptchaRequest('reportCorrect', { taskId: confirmCaptcha.taskId })
