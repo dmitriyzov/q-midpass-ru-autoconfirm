@@ -9,7 +9,12 @@
 
 ## Запуск
 
-1. Первый раз пишем `curl -fsSL https://bun.sh/install | bash`, затем `git clone https://github.com/VityaSchel/q-midpass-ru-autoconfirm && bun install` и вставляем API ключ от [https://rucaptcha.ru/](https://rucaptcha.ru/), почту и пароль от q.midpass.ru, а так же код страны и консульства (можно посмотреть в исходнике сайта) в файл **config.conf**
+1. Install [bun](https://bun.com/) - `curl -fsSL https://bun.sh/install | bash`
+2. Clone the repo - `git clone https://github.com/VityaSchel/q-midpass-ru-autoconfirm`
+3. Install dependencies - `bun install`
+4. Вставьте API ключ от [https://rucaptcha.ru/](https://rucaptcha.ru/) в файл **config.conf**
+5. Вставьте почту и пароль от q.midpass.ru в файл **config.conf**
+6. Вставьте код страны и консульства (можно посмотреть в исходнике сайта) в файл **config.conf**
 
     Пример config.conf:
     ![Скриншот config.conf](https://i.imgur.com/WWoR8xR.png)
