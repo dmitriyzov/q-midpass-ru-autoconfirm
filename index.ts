@@ -26,7 +26,9 @@ async function solveCaptcha(base64: string): Promise<{ taskId: number, solution:
   var { errorId, taskId } = await rucaptchaRequest<{ errorId: number, taskId: number }>('createTask', {
     task: { type: 'ImageToTextTask', body: base64, case: true, minLength: 6, maxLength: 6, numeric: 4 }
   })
+
   if (errorId !== 0) throw new Error(`Ошибка при создании задачи на решение капчи: ${errorId}`)
+  
   await new Promise(resolve => setTimeout(resolve, 10000))
   var solution: { text: string } | undefined
   do {
@@ -66,6 +68,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   })
 
   const authCaptcha = await solveCaptcha(captchaBase64)
+
   if (authCaptcha === null) {
     console.error('Не смогли разгадать капчу, попытка №', attempts + 1)
     await page.goto('https://q.midpass.ru/')
@@ -79,6 +82,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   await (await page.waitForSelector('button[onclick="javascript:LogOn();"]'))?.click()
   console.log('clicked')
   await page.waitForNavigation()
+  
   const isCaptchaError = await page.evaluate(() => {
     const captchaErrorElement = document.querySelector('#captchaError')
     return captchaErrorElement && captchaErrorElement.textContent !== null && captchaErrorElement.textContent.trim().length > 0
@@ -92,9 +96,11 @@ for(let attempts = 0; attempts < 3; attempts++) {
     break
   }
 }
+
 if (!authorized) throw new Error('Не удалось авторизоваться')
 
 const isBanPage = await page.evaluate(() => window.location.pathname.endsWith('Account/BanPage'))
+
 if (isBanPage) {
   await browser.close()
   throw new Error('Аккаунт заблокировали, вставьте новый пароль с почты в config.conf')
@@ -111,6 +117,7 @@ confirm.click()
 await new Promise(resolve => setTimeout(resolve, 1000))
 
 let confirmed
+
 for(let attempts = 0; attempts < 3; attempts++) {
   const confirmCaptchaBase64 = await page.evaluate(() => {
     const captcha = document.querySelector('img#imgCaptcha') as HTMLImageElement
@@ -142,8 +149,10 @@ for(let attempts = 0; attempts < 3; attempts++) {
           if (!responseElement || !responseElement.textContent || !responseElement.textContent.trim()) return null
           return responseElement.textContent.trim()
         })
+
         if(text === null) return
         clearInterval(interval)
+
         if (text === 'Не заполнено "Символы с картинки"') {
           resolve(true)
         } else if (text === 'Заявка подтверждена.') {
@@ -153,6 +162,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
         }
       }, 300)
     })
+
     if (isCaptchaError) {
       await page.$eval('.messager-window a', (el: HTMLAnchorElement) => el.click())
       console.error('Неверно введена капча, попытка №', attempts + 1)
