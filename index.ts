@@ -49,10 +49,12 @@ async function solveCaptcha(base64: string): Promise<{ taskId: number, solution:
   return { solution: solution.text, taskId }
 }
 
+console.log("launching browser...")
 const browser = await puppeteer.launch({ headless: true })
 const page = await browser.newPage()
 await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36')
 await page.setViewport({ width: 941, height: 704 })
+console.log("going to q.midpass.ru...")
 await page.goto('https://q.midpass.ru/')
 
 let authorized = false
@@ -70,6 +72,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
     return canvas.toDataURL('image/png')
   })
 
+  console.log("solving auth captcha, attempt #", attempts + 1);
   const authCaptcha = await solveCaptcha(captchaBase64)
 
   if (authCaptcha === null) {
@@ -77,13 +80,16 @@ for(let attempts = 0; attempts < 3; attempts++) {
     await page.goto('https://q.midpass.ru/')
     continue
   }
+
+  console.log('Разгадали капчу авторизации:', authCaptcha.solution);
+
   await page.$eval('input#Captcha', (el: HTMLInputElement, solution: string) => el.value = solution, authCaptcha.solution)
   
   await new Promise(resolve => setTimeout(resolve, 100))
+  console.log("Clicking 'Войти'...")
   console.log('click')
 
   await (await page.waitForSelector('button[onclick="javascript:LogOn();"]'))?.click()
-  console.log('clicked')
   await page.waitForNavigation()
   
   const isCaptchaError = await page.evaluate(() => {
@@ -110,6 +116,9 @@ if (isBanPage) {
   throw new Error('Аккаунт заблокировали, вставьте новый пароль с почты в config.conf')
 }
 
+console.error('Авторизировались!')
+
+console.log("going to q.midpass.ru/ru/Appointments/WaitingList...")
 await page.goto('https://q.midpass.ru/ru/Appointments/WaitingList')
 const checkbox = await page.waitForSelector('.datagrid-body input[type=checkbox]') as import('puppeteer').ElementHandle<HTMLInputElement>
 await new Promise(resolve => setTimeout(resolve, 100))
@@ -117,6 +126,7 @@ checkbox.click()
 await new Promise(resolve => setTimeout(resolve, 100))
 const confirm = await page.waitForSelector('a#confirmAppointments') as import('puppeteer').ElementHandle<HTMLAnchorElement>
 await new Promise(resolve => setTimeout(resolve, 100))
+console.log("Clicking 'Подтвердить'...")
 confirm.click()
 await new Promise(resolve => setTimeout(resolve, 1000))
 
@@ -133,6 +143,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   })
   console.log('confirmCaptchaBase64', confirmCaptchaBase64?.length)
   if (confirmCaptchaBase64) {
+    console.log("solving confirm captcha, attempt #", attempts + 1);
     const confirmCaptcha = await solveCaptcha(confirmCaptchaBase64)
     if (confirmCaptcha === null) {
       console.error('Не смогли разгадать капчу, попытка №', attempts + 1)
@@ -140,6 +151,11 @@ for(let attempts = 0; attempts < 3; attempts++) {
       await new Promise(resolve => setTimeout(resolve, 2000))
       continue
     }
+
+    console.log('Разгадали капчу подтверждения:', confirmCaptcha.solution)
+
+    console.log('Вводим капчу подтверждения...')
+
     await page.$eval('input#captchaValue', (el: HTMLInputElement, solution: string) => el.value = solution, confirmCaptcha.solution)
     await new Promise(resolve => setTimeout(resolve, 100))
     await page.$eval('.dialog-button a', (el: HTMLAnchorElement) => el.click())
@@ -176,6 +192,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
       confirmed = true
       await page.waitForSelector('.datagrid-body [field=PlaceInQueueString]')
       console.log('Место', await page.$eval('.datagrid-body td[field=PlaceInQueueString]', (el: HTMLTableCellElement) => el.textContent))
+      console.log('Заявка подтверждена!')
       break
     }
   }
