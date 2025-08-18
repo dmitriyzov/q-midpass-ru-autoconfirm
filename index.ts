@@ -148,7 +148,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
     if (captcha && captcha.src) {
       const canvas = document.createElement('canvas')
       canvas.getContext('2d')!.drawImage(captcha, 0, 0)
-      return canvas.toDataURL('image/png')
+      return canvas.toDataURL('image/png').replace(/^data:image\/\w+;base64,/, '')
     }
   })
   console.log('confirmCaptchaBase64', confirmCaptchaBase64?.length)
