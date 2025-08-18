@@ -1,3 +1,4 @@
+import fs from 'fs'
 import puppeteer from 'puppeteer-extra'
 import RecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
@@ -83,6 +84,11 @@ for(let attempts = 0; attempts < 3; attempts++) {
 
   console.log('Разгадали капчу авторизации:', authCaptcha.solution);
 
+  // DEBUG
+  // fs.writeFileSync(`captchas/rucaptcha/${authCaptcha.solution}.png`, captchaBase64, 'base64')
+  // await page.close()
+  // process.exit(0)
+
   await page.$eval('input#Captcha', (el: HTMLInputElement, solution: string) => el.value = solution, authCaptcha.solution)
   
   await new Promise(resolve => setTimeout(resolve, 100))
@@ -117,6 +123,10 @@ if (isBanPage) {
 }
 
 console.error('Авторизировались!')
+
+// DEBUG
+// await page.close()
+// process.exit(0)
 
 console.log("going to q.midpass.ru/ru/Appointments/WaitingList...")
 await page.goto('https://q.midpass.ru/ru/Appointments/WaitingList')
@@ -153,6 +163,11 @@ for(let attempts = 0; attempts < 3; attempts++) {
     }
 
     console.log('Разгадали капчу подтверждения:', confirmCaptcha.solution)
+
+    // DEBUG
+    // fs.writeFileSync(`captchas/rucaptcha/2-confirm/${confirmCaptcha.solution}.png`, confirmCaptchaBase64, 'base64')
+    // await page.close()
+    // process.exit(0)
 
     console.log('Вводим капчу подтверждения...')
 
