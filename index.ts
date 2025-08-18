@@ -30,7 +30,9 @@ async function solveCaptcha(base64: string): Promise<{ taskId: number, solution:
   if (errorId !== 0) throw new Error(`Ошибка при создании задачи на решение капчи: ${errorId}`)
   
   await new Promise(resolve => setTimeout(resolve, 10000))
+
   var solution: { text: string } | undefined
+  
   do {
     var { solution, errorId } = await rucaptchaRequest<{ solution?: { text: string }, errorId: number }>('getTaskResult', { taskId })
     if (errorId !== 0) {
@@ -43,6 +45,7 @@ async function solveCaptcha(base64: string): Promise<{ taskId: number, solution:
       await new Promise(resolve => setTimeout(resolve, 2500))
     }
   } while (solution === undefined)
+    
   return { solution: solution.text, taskId }
 }
 
@@ -87,6 +90,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
     const captchaErrorElement = document.querySelector('#captchaError')
     return captchaErrorElement && captchaErrorElement.textContent !== null && captchaErrorElement.textContent.trim().length > 0
   })
+
   if (isCaptchaError) {
     console.error('Неверно введена капча, попытка №', attempts + 1)
     await rucaptchaRequest('reportIncorrect', { taskId: authCaptcha.taskId })
