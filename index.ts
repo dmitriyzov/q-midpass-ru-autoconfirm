@@ -50,7 +50,6 @@ async function solveCaptcha(base64: string): Promise<{ taskId: number, solution:
   return { solution: solution.text, taskId }
 }
 
-console.log("launching browser...")
 const browser = await puppeteer.launch({ headless: true })
 const page = await browser.newPage()
 await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36')
@@ -151,7 +150,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
       return canvas.toDataURL('image/png').replace(/^data:image\/\w+;base64,/, '')
     }
   })
-  console.log('confirmCaptchaBase64', confirmCaptchaBase64?.length)
+  
   if (confirmCaptchaBase64) {
     console.log("solving confirm captcha, attempt #", attempts + 1);
     const confirmCaptcha = await solveCaptcha(confirmCaptchaBase64)
