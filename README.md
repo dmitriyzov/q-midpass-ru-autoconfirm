@@ -1,6 +1,6 @@
 # Автоподтверждение q.midpass.ru за 5 секунд
 
-Скрипт для автоматического подтверждения свей заявки на загранпаспорт в консульстве России.
+Скрипт для автоматического подтверждения свей заявки на загранпаспорт в консульстве России. Скрипт будет автоматически запускаться раз в день в 12 UTC с помощью GitHub actions.
 
 Мой скрипт написан на JS и puppeteer и хорош тем, что вам нужно посмотреть всего один файл, чтобы удостовериться, что он не наносит никакого вреда. Вообще весь код в одном маленьком файле.
 
@@ -12,12 +12,10 @@
 1. Fork this repo
 2. Go to your repo's Settings page > Secrets and Variables > Actions
 3. Add new repository secrets:
-    3.1. почта (EMAIL) и пароль (PASSWORD) от q.midpass.ru
-    3.2. API ключ (RECAPTCHA_KEY) от [https://rucaptcha.ru/](https://rucaptcha.ru/)
+    1. почта (EMAIL) и пароль (PASSWORD) от q.midpass.ru
+    2. API ключ (RECAPTCHA_KEY) от [https://rucaptcha.ru/](https://rucaptcha.ru/)
 4. Add new repository variables:
-    4.1. код страны (COUNTRY) и консульства (LOCATION) (можно посмотреть в исходнике сайта)
-
-Скрипт будет автоматически запускаться раз в день в 12 UTC.
+    1. код страны (COUNTRY) и консульства (LOCATION) (можно посмотреть в исходнике сайта)
 
     Пример значений `COUNTRY` и `LOCATION`:
 
