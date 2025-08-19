@@ -1,0 +1,29 @@
+name: Run script daily
+
+on:
+    schedule:
+        - cron: "0 12 * * *"
+    workflow_dispatch: # allow manual execution
+
+jobs:
+    run-script:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: "20"
+            
+            - name: Install dependencies
+              run: npm install
+            
+            - name: Run script
+              env:
+                EMAIL: ${{ secrets.EMAIL }}
+                PASSWORD: ${{ secrets.PASSWORD }}
+                RUCAPTCHA_KEY: ${{ secrets.RUCAPTCHA_KEY }}
+                COUNTRY: ${{ vars.COUNTRY }}
+                LOCATION: ${{ vars.LOCATION }}
+              run: npx ts-node index.ts
