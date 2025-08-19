@@ -2,24 +2,24 @@
 
 Скрипт для автоматического подтверждения свей заявки на загранпаспорт в консульстве России.
 
-Мой скрипт написан на JS и puppeteer и хорош тем, что вам нужно посмотреть всего один файл, чтобы удостовериться, что он не наносит никакого вреда. Вообще весь код в одном маленьком файле. simply run index.ts.
+Мой скрипт написан на JS и puppeteer и хорош тем, что вам нужно посмотреть всего один файл, чтобы удостовериться, что он не наносит никакого вреда. Вообще весь код в одном маленьком файле.
 
 > [!IMPORTANT]
 > Я ищу работу! Если вы заинтересованы в моем найме, посетите [cv.hloth.dev](https://cv.hloth.dev), чтобы просмотреть мои резюме и CV.
 
 ## Запуск
 
-1. Install [bun](https://bun.com/) - `curl -fsSL https://bun.sh/install | bash`
-2. Clone the repo - `git clone https://github.com/VityaSchel/q-midpass-ru-autoconfirm`
-3. Install dependencies - `bun install`
-4. Вставьте API ключ от [https://rucaptcha.ru/](https://rucaptcha.ru/) в файл **config.conf**
-5. Вставьте почту и пароль от q.midpass.ru в файл **config.conf**
-6. Вставьте код страны и консульства (можно посмотреть в исходнике сайта) в файл **config.conf**
+1. Fork this repo
+2. Go to your repo's Settings page > Secrets and Variables > Actions
+3. Add new repository secrets:
+    3.1. почта (EMAIL) и пароль (PASSWORD) от q.midpass.ru
+    3.2. API ключ (RECAPTCHA_KEY) от [https://rucaptcha.ru/](https://rucaptcha.ru/)
+4. Add new repository variables:
+    4.1. код страны (COUNTRY) и консульства (LOCATION) (можно посмотреть в исходнике сайта)
 
-    Пример config.conf:
-    ![Скриншот config.conf](https://i.imgur.com/WWoR8xR.png)
+Скрипт будет автоматически запускаться раз в день в 12 UTC.
 
-    Пример значений `COUNTRY` и `LOCATION` для config.conf:
+    Пример значений `COUNTRY` и `LOCATION`:
 
     ```javascript
     COUNTRY=88655495-3b8c-f56d-5337-0f2743a7bfed # Грузия
@@ -27,8 +27,6 @@
     LOCATION=b8af6319-9d8d-5bd9-f896-edb8b97362d0 # Тбилиси
     LOCATION=ea52c900-b992-dc1f-960d-a0e02771622c # Нью-Йорк
     ```
-
-2. Далее раз в сутки пишем `bun start`
 
 Иногда сайт может начать говниться и выкинуть такую ошибку:
 ![qmidpass ошибка бот](https://i.imgur.com/SyqEDe1.png)

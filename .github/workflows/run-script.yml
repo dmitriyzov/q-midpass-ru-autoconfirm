@@ -1,4 +1,4 @@
-name: Run script daily
+name: Подтвердить заявку
 
 on:
     schedule:
@@ -26,4 +26,4 @@ jobs:
                 RUCAPTCHA_KEY: ${{ secrets.RUCAPTCHA_KEY }}
                 COUNTRY: ${{ vars.COUNTRY }}
                 LOCATION: ${{ vars.LOCATION }}
-              run: npx ts-node index.ts
+              run: node --loader ts-node/esm index.ts
