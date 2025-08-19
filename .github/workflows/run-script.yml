@@ -1,4 +1,4 @@
-name: Run script daily
+name: Подтвердить заявку
 
 on:
     schedule:
