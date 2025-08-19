@@ -1,3 +1,4 @@
+import fs from 'fs'
 import puppeteer from 'puppeteer-extra'
 import RecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
@@ -26,9 +27,13 @@ async function solveCaptcha(base64: string): Promise<{ taskId: number, solution:
   var { errorId, taskId } = await rucaptchaRequest<{ errorId: number, taskId: number }>('createTask', {
     task: { type: 'ImageToTextTask', body: base64, case: true, minLength: 6, maxLength: 6, numeric: 4 }
   })
+
   if (errorId !== 0) throw new Error(`Ошибка при создании задачи на решение капчи: ${errorId}`)
+  
   await new Promise(resolve => setTimeout(resolve, 10000))
+
   var solution: { text: string } | undefined
+  
   do {
     var { solution, errorId } = await rucaptchaRequest<{ solution?: { text: string }, errorId: number }>('getTaskResult', { taskId })
     if (errorId !== 0) {
@@ -41,6 +46,7 @@ async function solveCaptcha(base64: string): Promise<{ taskId: number, solution:
       await new Promise(resolve => setTimeout(resolve, 2500))
     }
   } while (solution === undefined)
+    
   return { solution: solution.text, taskId }
 }
 
@@ -48,6 +54,8 @@ const browser = await puppeteer.launch({ headless: true })
 const page = await browser.newPage()
 await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36')
 await page.setViewport({ width: 941, height: 704 })
+
+console.log("going to q.midpass.ru...")
 await page.goto('https://q.midpass.ru/')
 
 let authorized = false
@@ -62,29 +70,40 @@ for(let attempts = 0; attempts < 3; attempts++) {
   const captchaBase64 = await page.$eval('img#imgCaptcha', (el: HTMLImageElement) => {
     const canvas = document.createElement('canvas')
     canvas.getContext('2d')!.drawImage(el, 0, 0)
-    return canvas.toDataURL('image/png')
+    return canvas.toDataURL('image/png').replace(/^data:image\/\w+;base64,/, '')
   })
 
+  console.log("solving auth captcha, attempt #", attempts + 1);
   const authCaptcha = await solveCaptcha(captchaBase64)
+
   if (authCaptcha === null) {
-    console.error('Не смогли разгадать капчу, попытка №', attempts + 1)
+    console.error(`Не смогли разгадать капчу авторизации с ${attempts+1}й попытки`)
     await page.goto('https://q.midpass.ru/')
     continue
   }
+
+  console.log('Разгадали капчу авторизации:', authCaptcha.solution);
+
+  // DEBUG
+  // fs.writeFileSync(`captchas/rucaptcha/${authCaptcha.solution}.png`, captchaBase64, 'base64')
+  // await page.close()
+  // process.exit(0)
+
   await page.$eval('input#Captcha', (el: HTMLInputElement, solution: string) => el.value = solution, authCaptcha.solution)
   
   await new Promise(resolve => setTimeout(resolve, 100))
-  console.log('click')
-
+  
+  console.log("Clicking 'Войти'...")
   await (await page.waitForSelector('button[onclick="javascript:LogOn();"]'))?.click()
-  console.log('clicked')
   await page.waitForNavigation()
+  
   const isCaptchaError = await page.evaluate(() => {
     const captchaErrorElement = document.querySelector('#captchaError')
     return captchaErrorElement && captchaErrorElement.textContent !== null && captchaErrorElement.textContent.trim().length > 0
   })
+
   if (isCaptchaError) {
-    console.error('Неверно введена капча, попытка №', attempts + 1)
+    console.error('Неверно введена капча авторизации, попытка №', attempts + 1)
     await rucaptchaRequest('reportIncorrect', { taskId: authCaptcha.taskId })
   } else {
     await rucaptchaRequest('reportCorrect', { taskId: authCaptcha.taskId })
@@ -92,14 +111,23 @@ for(let attempts = 0; attempts < 3; attempts++) {
     break
   }
 }
+
 if (!authorized) throw new Error('Не удалось авторизоваться')
 
 const isBanPage = await page.evaluate(() => window.location.pathname.endsWith('Account/BanPage'))
+
 if (isBanPage) {
   await browser.close()
-  throw new Error('Аккаунт заблокировали, вставьте новый пароль с почты в config.conf')
+  throw new Error('Аккаунт заблокировали, вставьте новый пароль из почты в config.conf')
 }
 
+console.error('Авторизировались!')
+
+// DEBUG
+// await page.close()
+// process.exit(0)
+
+console.log("going to q.midpass.ru/ru/Appointments/WaitingList...")
 await page.goto('https://q.midpass.ru/ru/Appointments/WaitingList')
 const checkbox = await page.waitForSelector('.datagrid-body input[type=checkbox]') as import('puppeteer').ElementHandle<HTMLInputElement>
 await new Promise(resolve => setTimeout(resolve, 100))
@@ -107,28 +135,41 @@ checkbox.click()
 await new Promise(resolve => setTimeout(resolve, 100))
 const confirm = await page.waitForSelector('a#confirmAppointments') as import('puppeteer').ElementHandle<HTMLAnchorElement>
 await new Promise(resolve => setTimeout(resolve, 100))
+console.log("Clicking 'Подтвердить'...")
 confirm.click()
 await new Promise(resolve => setTimeout(resolve, 1000))
 
 let confirmed
+
 for(let attempts = 0; attempts < 3; attempts++) {
   const confirmCaptchaBase64 = await page.evaluate(() => {
     const captcha = document.querySelector('img#imgCaptcha') as HTMLImageElement
     if (captcha && captcha.src) {
       const canvas = document.createElement('canvas')
       canvas.getContext('2d')!.drawImage(captcha, 0, 0)
-      return canvas.toDataURL('image/png')
+      return canvas.toDataURL('image/png').replace(/^data:image\/\w+;base64,/, '')
     }
   })
-  console.log('confirmCaptchaBase64', confirmCaptchaBase64?.length)
+  
   if (confirmCaptchaBase64) {
+    console.log("solving confirm captcha, attempt #", attempts + 1);
     const confirmCaptcha = await solveCaptcha(confirmCaptchaBase64)
     if (confirmCaptcha === null) {
-      console.error('Не смогли разгадать капчу, попытка №', attempts + 1)
+      console.error('Не смогли разгадать капчу подтверждения')
       await page.$eval('a[href="javascript:RefreshCaptcha();"', (el: HTMLAnchorElement) => el.click())
       await new Promise(resolve => setTimeout(resolve, 2000))
       continue
     }
+
+    console.log('Разгадали капчу подтверждения:', confirmCaptcha.solution)
+
+    // DEBUG
+    // fs.writeFileSync(`captchas/rucaptcha/2-confirm/${confirmCaptcha.solution}.png`, confirmCaptchaBase64, 'base64')
+    // await page.close()
+    // process.exit(0)
+
+    console.log('Вводим капчу подтверждения...')
+
     await page.$eval('input#captchaValue', (el: HTMLInputElement, solution: string) => el.value = solution, confirmCaptcha.solution)
     await new Promise(resolve => setTimeout(resolve, 100))
     await page.$eval('.dialog-button a', (el: HTMLAnchorElement) => el.click())
@@ -142,8 +183,10 @@ for(let attempts = 0; attempts < 3; attempts++) {
           if (!responseElement || !responseElement.textContent || !responseElement.textContent.trim()) return null
           return responseElement.textContent.trim()
         })
+
         if(text === null) return
         clearInterval(interval)
+
         if (text === 'Не заполнено "Символы с картинки"') {
           resolve(true)
         } else if (text === 'Заявка подтверждена.') {
@@ -153,19 +196,23 @@ for(let attempts = 0; attempts < 3; attempts++) {
         }
       }, 300)
     })
+
     if (isCaptchaError) {
       await page.$eval('.messager-window a', (el: HTMLAnchorElement) => el.click())
-      console.error('Неверно введена капча, попытка №', attempts + 1)
+      console.error('Неверно введена капча подтверждения, попытка №', attempts + 1)
       await rucaptchaRequest('reportIncorrect', { taskId: confirmCaptcha.taskId })
     } else {
       await rucaptchaRequest('reportCorrect', { taskId: confirmCaptcha.taskId })
       confirmed = true
       await page.waitForSelector('.datagrid-body [field=PlaceInQueueString]')
       console.log('Место', await page.$eval('.datagrid-body td[field=PlaceInQueueString]', (el: HTMLTableCellElement) => el.textContent))
+      console.log('Заявка подтверждена!')
       break
     }
   }
 }
-if (!confirmed) throw new Error('Не удалось подтвердить заявку')
+
+if (!confirmed) throw new Error('Не удалось подтвердить заявку.')
+
 await page.close()
 process.exit(0)
