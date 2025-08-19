@@ -54,6 +54,7 @@ const browser = await puppeteer.launch({ headless: true })
 const page = await browser.newPage()
 await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36')
 await page.setViewport({ width: 941, height: 704 })
+
 console.log("going to q.midpass.ru...")
 await page.goto('https://q.midpass.ru/')
 
@@ -76,7 +77,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   const authCaptcha = await solveCaptcha(captchaBase64)
 
   if (authCaptcha === null) {
-    console.error('Не смогли разгадать капчу авторизации, попытка №', attempts + 1)
+    console.error(`Не смогли разгадать капчу авторизации с ${attempts+1}й попытки`)
     await page.goto('https://q.midpass.ru/')
     continue
   }
@@ -91,9 +92,8 @@ for(let attempts = 0; attempts < 3; attempts++) {
   await page.$eval('input#Captcha', (el: HTMLInputElement, solution: string) => el.value = solution, authCaptcha.solution)
   
   await new Promise(resolve => setTimeout(resolve, 100))
+  
   console.log("Clicking 'Войти'...")
-  console.log('click')
-
   await (await page.waitForSelector('button[onclick="javascript:LogOn();"]'))?.click()
   await page.waitForNavigation()
   
@@ -118,7 +118,7 @@ const isBanPage = await page.evaluate(() => window.location.pathname.endsWith('A
 
 if (isBanPage) {
   await browser.close()
-  throw new Error('Аккаунт заблокировали, вставьте новый пароль с почты в config.conf')
+  throw new Error('Аккаунт заблокировали, вставьте новый пароль из почты в config.conf')
 }
 
 console.error('Авторизировались!')
