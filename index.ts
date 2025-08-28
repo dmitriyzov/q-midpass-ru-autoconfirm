@@ -146,13 +146,14 @@ checkbox.click()
 await new Promise(resolve => setTimeout(resolve, 100))
 const confirm = await page.waitForSelector('a#confirmAppointments') as import('puppeteer').ElementHandle<HTMLAnchorElement>
 await new Promise(resolve => setTimeout(resolve, 100))
-console.log("Clicking 'Подтвердить'...")
-confirm.click()
-await new Promise(resolve => setTimeout(resolve, 1000))
 
 let confirmed
 
 for(let attempts = 0; attempts < 3; attempts++) {
+  console.log("Clicking 'Подтвердить'...")
+  confirm.click()
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
   const confirmCaptchaBase64 = await page.evaluate(() => {
     const captcha = document.querySelector('img#imgCaptcha') as HTMLImageElement
     if (captcha && captcha.src) {
