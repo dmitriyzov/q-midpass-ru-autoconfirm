@@ -83,7 +83,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
 
   console.log("solving auth captcha, attempt #", attempts + 1);
   if (process.env.LOG_CAPTCHA_BASE64 === "true") {
-    console.log(captchaBase64)
+    console.log(captchaBase64.slice(-50))
   }
   const authCaptcha = await solveCaptcha(captchaBase64)
 
@@ -165,7 +165,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   if (confirmCaptchaBase64) {
     console.log("solving confirm captcha, attempt #", attempts + 1);
     if (process.env.LOG_CAPTCHA_BASE64 === "true") {
-      console.log(confirmCaptchaBase64)
+      console.log(confirmCaptchaBase64.slice(-50))
     }
     const confirmCaptcha = await solveCaptcha(confirmCaptchaBase64)
     if (confirmCaptcha === null) {
