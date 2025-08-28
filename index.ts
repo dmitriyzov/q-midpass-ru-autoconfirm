@@ -221,9 +221,9 @@ for(let attempts = 0; attempts < 3; attempts++) {
     } else {
       await rucaptchaRequest('reportCorrect', { taskId: confirmCaptcha.taskId })
       confirmed = true
+      console.log('Заявка подтверждена!')
       await page.waitForSelector('.datagrid-body [field=PlaceInQueueString]')
       console.log(await page.$eval('.datagrid-body td[field=PlaceInQueueString]', (el: HTMLTableCellElement) => el.textContent))
-      console.log('Заявка подтверждена!')
       break
     }
   }
