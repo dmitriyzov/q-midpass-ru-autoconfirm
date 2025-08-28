@@ -63,11 +63,11 @@ const page = await browser.newPage()
 await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36')
 await page.setViewport({ width: 941, height: 704 })
 
-console.log("Заходим на главную страницу...")
-await page.goto('https://q.midpass.ru/')
-
 let authorized = false
 for(let attempts = 0; attempts < 3; attempts++) {
+  console.log("Заходим на главную страницу...")
+  await page.goto('https://q.midpass.ru/')
+
   await (await page.waitForSelector('div.register_form:has(input#CountryId) > select'))?.select(country)
   await (await page.waitForSelector('div.register_form:has(input#ServiceProviderId) > select'))?.select(location)
   await page.$eval('input#Email', (el: HTMLInputElement, email) => el.value = email, email)
@@ -89,7 +89,6 @@ for(let attempts = 0; attempts < 3; attempts++) {
 
   if (authCaptcha === null) {
     console.error(`Не смогли разгадать капчу авторизации с ${attempts+1}й попытки.`)
-    await page.goto('https://q.midpass.ru/')
     continue
   }
 
