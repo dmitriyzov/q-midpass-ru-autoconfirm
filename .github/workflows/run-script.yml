@@ -28,4 +28,5 @@ jobs:
                 RUCAPTCHA_KEY: ${{ secrets.RUCAPTCHA_KEY }}
                 COUNTRY: ${{ vars.COUNTRY }}
                 LOCATION: ${{ vars.LOCATION }}
+                LOG_CAPTCHA_BASE64: ${{ vars.LOG_CAPTCHA_BASE64 }}
               run: node --loader ts-node/esm index.ts
