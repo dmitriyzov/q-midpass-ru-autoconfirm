@@ -1,3 +1,5 @@
+[![Подтвердить заявку](https://github.com/dmitriyzov/q-midpass-ru-autoconfirm/actions/workflows/run-script.yml/badge.svg)](https://github.com/dmitriyzov/q-midpass-ru-autoconfirm/actions/workflows/run-script.yml)
+
 # Автоподтверждение q.midpass.ru за 5 секунд
 
 Скрипт для автоматического подтверждения свей заявки на загранпаспорт в консульстве России. Скрипт автоматически запускается раз в день в 12:00 UTC с помощью GitHub Actions.
