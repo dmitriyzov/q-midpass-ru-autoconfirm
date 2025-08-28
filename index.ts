@@ -63,11 +63,11 @@ const page = await browser.newPage()
 await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36')
 await page.setViewport({ width: 941, height: 704 })
 
-console.log("going to q.midpass.ru...")
-await page.goto('https://q.midpass.ru/')
-
 let authorized = false
 for(let attempts = 0; attempts < 3; attempts++) {
+  console.log("Заходим на главную страницу...")
+  await page.goto('https://q.midpass.ru/')
+
   await (await page.waitForSelector('div.register_form:has(input#CountryId) > select'))?.select(country)
   await (await page.waitForSelector('div.register_form:has(input#ServiceProviderId) > select'))?.select(location)
   await page.$eval('input#Email', (el: HTMLInputElement, email) => el.value = email, email)
@@ -81,15 +81,14 @@ for(let attempts = 0; attempts < 3; attempts++) {
     return canvas.toDataURL('image/png').replace(/^data:image\/\w+;base64,/, '')
   })
 
-  console.log("solving auth captcha, attempt #", attempts + 1);
+  console.log(`Разгадываем капчу авторизации, попытка № ${attempts + 1}...`);
   if (process.env.LOG_CAPTCHA_BASE64 === "true") {
-    console.log(captchaBase64)
+    console.log(captchaBase64.slice(-50))
   }
   const authCaptcha = await solveCaptcha(captchaBase64)
 
   if (authCaptcha === null) {
-    console.error(`Не смогли разгадать капчу авторизации с ${attempts+1}й попытки`)
-    await page.goto('https://q.midpass.ru/')
+    console.error(`Не смогли разгадать капчу авторизации с ${attempts+1}й попытки.`)
     continue
   }
 
@@ -104,7 +103,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   
   await new Promise(resolve => setTimeout(resolve, 100))
   
-  console.log("Clicking 'Войти'...")
+  console.log("Кликаем 'Войти'...")
   await (await page.waitForSelector('button[onclick="javascript:LogOn();"]'))?.click()
   await page.waitForNavigation()
   
@@ -114,7 +113,7 @@ for(let attempts = 0; attempts < 3; attempts++) {
   })
 
   if (isCaptchaError) {
-    console.error('Неверно введена капча авторизации, попытка №', attempts + 1)
+    console.error(`Неверно введена капча авторизации с ${attempts + 1}й попытки`)
     await rucaptchaRequest('reportIncorrect', { taskId: authCaptcha.taskId })
   } else {
     await rucaptchaRequest('reportCorrect', { taskId: authCaptcha.taskId })
@@ -129,16 +128,16 @@ const isBanPage = await page.evaluate(() => window.location.pathname.endsWith('A
 
 if (isBanPage) {
   await browser.close()
-  throw new Error('Аккаунт заблокировали, вставьте новый пароль из почты в config.conf')
+  throw new Error('Аккаунт заблокировали, обновите PASSWORD на новый пароль из почты.')
 }
 
-console.error('Авторизировались!')
+console.log('Авторизировались!')
 
 // DEBUG
 // await page.close()
 // process.exit(0)
 
-console.log("going to q.midpass.ru/ru/Appointments/WaitingList...")
+console.log("Переходим на страницу Листа ожидания...")
 await page.goto('https://q.midpass.ru/ru/Appointments/WaitingList')
 const checkbox = await page.waitForSelector('.datagrid-body input[type=checkbox]') as import('puppeteer').ElementHandle<HTMLInputElement>
 await new Promise(resolve => setTimeout(resolve, 100))
@@ -146,13 +145,14 @@ checkbox.click()
 await new Promise(resolve => setTimeout(resolve, 100))
 const confirm = await page.waitForSelector('a#confirmAppointments') as import('puppeteer').ElementHandle<HTMLAnchorElement>
 await new Promise(resolve => setTimeout(resolve, 100))
-console.log("Clicking 'Подтвердить'...")
-confirm.click()
-await new Promise(resolve => setTimeout(resolve, 1000))
 
 let confirmed
 
 for(let attempts = 0; attempts < 3; attempts++) {
+  console.log("Кликаем 'Подтвердить'...")
+  confirm.click()
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
   const confirmCaptchaBase64 = await page.evaluate(() => {
     const captcha = document.querySelector('img#imgCaptcha') as HTMLImageElement
     if (captcha && captcha.src) {
@@ -163,11 +163,14 @@ for(let attempts = 0; attempts < 3; attempts++) {
   })
   
   if (confirmCaptchaBase64) {
-    console.log("solving confirm captcha, attempt #", attempts + 1);
+    console.log(`Разгадываем капчу подтверждения, попытка № ${attempts + 1}...`);
+    
     if (process.env.LOG_CAPTCHA_BASE64 === "true") {
-      console.log(confirmCaptchaBase64)
+      console.log(confirmCaptchaBase64.slice(-50))
     }
+    
     const confirmCaptcha = await solveCaptcha(confirmCaptchaBase64)
+    
     if (confirmCaptcha === null) {
       console.error('Не смогли разгадать капчу подтверждения')
       await page.$eval('a[href="javascript:RefreshCaptcha();"', (el: HTMLAnchorElement) => el.click())
@@ -213,14 +216,14 @@ for(let attempts = 0; attempts < 3; attempts++) {
 
     if (isCaptchaError) {
       await page.$eval('.messager-window a', (el: HTMLAnchorElement) => el.click())
-      console.error('Неверно введена капча подтверждения, попытка №', attempts + 1)
+      console.error(`Неверно введена капча подтверждения с ${attempts + 1}й попытки`)
       await rucaptchaRequest('reportIncorrect', { taskId: confirmCaptcha.taskId })
     } else {
       await rucaptchaRequest('reportCorrect', { taskId: confirmCaptcha.taskId })
       confirmed = true
-      await page.waitForSelector('.datagrid-body [field=PlaceInQueueString]')
-      console.log('Место', await page.$eval('.datagrid-body td[field=PlaceInQueueString]', (el: HTMLTableCellElement) => el.textContent))
       console.log('Заявка подтверждена!')
+      await page.waitForSelector('.datagrid-body [field=PlaceInQueueString]')
+      console.log(await page.$eval('.datagrid-body td[field=PlaceInQueueString]', (el: HTMLTableCellElement) => el.textContent))
       break
     }
   }
